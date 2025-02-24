@@ -56,11 +56,39 @@ async fn main() -> web3::Result<()> {
 
     // Print logs
     for log in logs {
-        println!("Log: {:?}", log);
+        match decode_event(&log) {
+            Ok((number, updater)) => {
+                println!("NumberUpdatedEvent: number = {}, updater = {:?}", number, updater);
+            }
+            Err(e) => {
+                println!("Failed to decode event: {:?}", e);
+            }
+        }
+        println!("Log: {:?}", &log);
     }
     println!("Using Infura URL: {}", infura_url);
     println!("Contract Address: {:?}", contract_address);
     println!("Event Signature: {:?}", event_signature);
 
     Ok(())
+}
+use web3::types::U256;
+use web3::types::Log;
+fn decode_event(log: &Log) -> Result<(u64, H160), String> {
+    if log.topics.len() < 2 {
+        return Err("Not enough topics in the log".to_string());
+    }
+
+    // Decode indexed topic (address)
+    let address_bytes = log.topics[1].0;
+    let updater = H160::from_slice(&address_bytes[12..32]); // Address is the last 20 bytes
+
+    // Decode 'data' (uint64) - Ethereum stores numbers as big-endian
+    if log.data.0.len() < 8 {
+        return Err("Not enough data to decode uint64".to_string());
+    }
+    let num = U256::from_big_endian(&log.data.0[log.data.0.len() - 8..]);
+    let value = num.low_u64(); // Extract u64 value
+
+    Ok((value, updater))
 }
