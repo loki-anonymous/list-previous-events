@@ -1,0 +1,11 @@
+[package]
+name = "list-previous-events"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tiny-keccak = { version = "2", features = ["keccak"] }
+hex = "0.4"
+tokio = { version = "1", features = ["full"] }
+web3 = "0.19"
+dotenv = "0.15"
